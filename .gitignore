@@ -209,6 +209,5 @@ __marimo__/
 
 # Custom files
 dataset/
+results/
 *.pt
-aws_key.txt
-view*/
