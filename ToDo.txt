@@ -1,0 +1,4 @@
+- Buat codingan untuk training segmentasi daun dan lesi tuh disatuin
+- Anotasi lesi disemua subset, baru anotasi daun di subset test aja
+- Coba training menggunakan model paling sedikit (sedikit parameter)
+- Baru coba sesuai desain experiment
