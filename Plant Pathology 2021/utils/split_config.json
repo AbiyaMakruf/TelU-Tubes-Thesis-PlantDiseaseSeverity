@@ -1,0 +1,20 @@
+{
+  "csv": "dataset/original_dataset/train.csv",
+  "images": "dataset/original_dataset/train_images",
+  "out": "dataset/original_dataset_split_by_class",
+  "classes": ["healthy", "rust", "frog_eye_leaf_spot"],
+  "subset": {
+    "base_split_dir": "dataset/original_dataset_split_by_class",
+    "out_dir": "dataset/original_dataset_split_by_subset",
+    "per_class_limit": 10000,
+    "ratios": {"train": 0.7, "valid": 0.1, "test": 0.2},
+    "mapping_csv": "dataset/original_dataset/mapping_subset.csv"
+  },
+  "rename": {
+    "base": "dataset/original_dataset_split_by_class",
+    "mapping": "dataset/original_dataset/mapping.csv",
+    "pad": 5,
+  "start": 1,
+  "apply": false
+  }
+}

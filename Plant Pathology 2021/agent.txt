@@ -1,0 +1,63 @@
+Agent Onboarding - What an AI assistant needs to know about this project
+
+Purpose
+- Repo: TelU-Tubes-Thesis-PlantDiseaseSeverity. Tools to split, rename, and prepare a plant-disease image dataset for labeling/Roboflow.
+
+Key locations
+- Dataset root (not included in repo): dataset/original_dataset/
+  - train.csv (header: image,labels)
+  - train_images/ (source images)
+  - test_images/, sample_submission.csv
+- Split-by-class output: dataset/original_dataset_split_by_class/{class}/
+- Split-by-subset output: dataset/original_dataset_split_by_subset/{train,valid,test}/
+- Mapping files:
+  - dataset/original_dataset/mapping.csv           (rename mapping: original_name,new_name)
+  - dataset/original_dataset/mapping_subset.csv    (subset mapping: name_file,subset)
+
+Main scripts (in utils/)
+- utils/split_by_class.py
+  - Reads utils/split_config.json
+  - Copies images from train_images into per-class folders using train.csv labels
+  - Run by: python3 utils/split_by_class.py  (no CLI args; edit config to change paths)
+
+- utils/rename_split_images.py
+  - Reads utils/split_config.json -> rename settings
+  - Renames images inside dataset/original_dataset_split_by_class and writes mapping.csv
+  - Config controls whether rename is applied; default configured in JSON
+  - Run by: python3 utils/rename_split_images.py
+
+- utils/split_by_subset.py
+  - Reads utils/split_config.json -> subset settings
+  - Takes first N images per class, splits sequentially into train/valid/test, copies into flattened subset folders (no per-class subfolders), writes mapping_subset.csv (name_file,subset)
+  - Run by: python3 utils/split_by_subset.py
+
+Config file
+- utils/split_config.json is the single source of truth for paths and options.
+  - csv, images, out, classes
+  - subset: base_split_dir, out_dir, per_class_limit, ratios, mapping_csv
+  - rename: base, mapping, pad, start, apply
+- To change behavior or paths: edit this JSON. Do not assume CLI args will be used.
+
+Runtime & safety
+- Python >=3.8 is required. Scripts use only stdlib modules.
+- Datasets are large and NOT committed. When running copy/rename scripts, disk space will be used.
+- Default rename apply flag is settable in JSON. Do NOT perform renames without checking config.
+- When writing mapping CSVs, if a file path exists as a directory (naming conflict), scripts may fail; ensure parent directories are correct.
+
+Recommended first-run checklist for an agent
+1. Inspect `utils/split_config.json` to learn configured paths and options.
+2. Verify dataset presence: check `dataset/original_dataset/train.csv` and `train_images/`.
+3. Run `python3 utils/split_by_class.py` (safe: copies into split_by_class).
+4. Run `python3 utils/split_by_subset.py` (creates subset folders and mapping_subset.csv).
+5. If you want uniform filenames for Roboflow, set `rename.apply` to true in config and run `python3 utils/rename_split_images.py` — but confirm backups and mapping.
+6. After each step, validate created folders and mapping CSVs.
+
+What to avoid or confirm with user
+- Do not run destructive renames or overwrites unless the user explicitly approves.
+- If a mapping CSV path collides with a directory, ask user before renaming/deleting.
+
+If you are the human-owner
+- Edit `utils/split_config.json` to change paths/options.
+- Run scripts by simply calling them with python3 (no CLI flags required).
+
+That's all the core context an agent needs to understand and safely operate on this project.
