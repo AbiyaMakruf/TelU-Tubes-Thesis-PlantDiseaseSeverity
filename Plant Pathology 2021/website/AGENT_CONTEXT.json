@@ -1,0 +1,20 @@
+{
+  "project": "TelU-Tubes-Thesis-PlantDiseaseSeverity",
+  "owner": "AbiyaMakruf",
+  "description": "Flask web UI for plant leaf detection, segmentation and severity estimation using Ultralytics YOLO models.",
+  "entrypoint": "website/app.py",
+  "important_paths": {
+    "templates": "website/templates",
+    "uploads": "website/uploads",
+    "results": "website/results_predict",
+    "models_object_detection": "website/models/object_detection",
+    "models_segmentation": "website/models/segmentation"
+  },
+  "session_keys": ["last_uploaded", "last_task", "last_det_model", "last_seg_model", "last_pad", "last_multi_leaf"],
+  "notes": [
+    "predict preference order: uploaded file -> existing_file -> session[last_uploaded]",
+    "severity logic: detection -> crop -> segmentation -> combine leaf masks -> compute lesion_in_leaf"
+  ],
+  "dependencies": ["flask", "ultralytics", "pillow", "numpy"],
+  "date_created": "2025-08-22"
+}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="p-5 bg-white rounded shadow-sm text-center">
+    <h1 class="display-4">🌿 Plant Pathology 2021</h1>
+    <p class="lead">See object detection, segmentation, and severity estimation in action — right here.</p>
+    <div class="d-flex justify-content-center gap-3 mt-4">
+      <a class="btn btn-success btn-lg" href="{{ url_for('dashboard') }}" role="button">Dashboard 📸</a>
+      <a class="btn btn-outline-success btn-lg" href="{{ url_for('upload') }}" role="button">Upload & Predict ⚡</a>
+    </div>
+    <hr class="my-4">
+    <div class="row mt-4">
+      <div class="col-md-4">
+        <div class="card p-3 shadow-sm">
+          <h5>Models 🔍</h5>
+          <p class="small">Detection (yolo11n/s/m) and segmentation models included for quick demos.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3 shadow-sm">
+          <h5>Dataset 🌱</h5>
+          <p class="small">Sample images from train/valid/test are available to preview the dataset.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card p-3 shadow-sm">
+          <h5>Severity ❤️</h5>
+          <p class="small">Estimate lesion severity from segmentation masks (single-click flow).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="row">
+    <div class="col-md-8">
+      <h1>Welcome</h1>
+      <p>This website is an alternative to the Streamlit demo. It provides an interface to upload images and run object-detection models (YOLO via Ultralytics).</p>
+      <h5>Quick steps</h5>
+      <ol>
+        <li>Place your .pt/.pth model under <code>website/models/object_detection/</code>.</li>
+        <li>Go to <a href="{{ url_for('upload') }}">Upload & Predict</a>, choose image and (optional) model, then Predict.</li>
+      </ol>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5>Available models</h5>
+          {% if models %}
+            <ul>
+              {% for m in models %}
+                <li>{{ m }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No models found. Add models to <code>models/object_detection</code>.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

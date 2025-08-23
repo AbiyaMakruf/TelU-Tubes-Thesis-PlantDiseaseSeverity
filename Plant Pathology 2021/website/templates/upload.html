@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Upload & Predict</h2>
+  {% set _last = last if (last is defined) else {'task': session.get('last_task','detection'), 'det_model': session.get('last_det_model',''), 'seg_model': session.get('last_seg_model',''), 'pad': session.get('last_pad',10), 'multi_leaf': session.get('last_multi_leaf','')} %}
+  <form id="predictForm" method="post" action="{{ url_for('predict') }}" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label for="file" class="form-label">Image file</label>
+      <input class="form-control" type="file" id="file" name="file" accept="image/*">
+      <div class="form-text">If you already uploaded an image, you can change task/options and press Run — no need to re-select the file.</div>
+      {% if uploaded_rel %}
+        <div class="mt-2 small text-muted">Last uploaded: <strong>{{ uploaded_basename }}</strong></div>
+        <input type="hidden" name="existing_file" id="existing_file" value="{{ uploaded_basename }}">
+      {% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Task</label>
+      <select class="form-select" id="task" name="task">
+        <option value="detection" {% if _last.task == 'detection' %}selected{% endif %}>Object Detection</option>
+        <option value="segmentation" {% if _last.task == 'segmentation' %}selected{% endif %}>Segmentation (mask_lesi_and_leaf)</option>
+        <option value="severity" {% if _last.task == 'severity' %}selected{% endif %}>Severity Estimation (det ➜ seg)</option>
+      </select>
+    </div>
+
+    <div class="mb-3" id="detModelGroup">
+      <label for="det_model" class="form-label">Detection model (optional)</label>
+      <select class="form-select" id="det_model" name="det_model">
+        <option value="" {% if not _last.det_model %}selected{% endif %}>-- auto (first found) --</option>
+        {% for full, name in det_models %}
+          <option value="{{ full }}" {% if full == _last.det_model %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3" id="segModelGroup">
+      <label for="seg_model" class="form-label">Segmentation model (for segmentation/severity)</label>
+      <select class="form-select" id="seg_model" name="seg_model">
+        <option value="" {% if not _last.seg_model %}selected{% endif %}>-- select segmentation model --</option>
+        {% for full, name in seg_models %}
+          <option value="{{ full }}" {% if full == _last.seg_model %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3 row">
+      <div class="col-md-6">
+        <label for="pad" class="form-label">Crop padding (px)</label>
+          <div class="d-flex align-items-center">
+            <input type="range" class="form-range me-2" id="pad" name="pad" min="0" max="200" value="{{ _last.pad }}">
+            <output id="padVal">{{ _last.pad }}</output>
+          </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Options</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="multi_leaf" name="multi_leaf" {% if _last.multi_leaf == 'on' %}checked{% endif %}>
+          <label class="form-check-label" for="multi_leaf">Compute severity for all detected leaves</label>
+        </div>
+      </div>
+    </div>
+
+  <button id="submitBtn" class="btn btn-primary" type="submit">Run</button>
+  <button id="resetBtn" class="btn btn-outline-secondary ms-2" type="button">Reset</button>
+    <div id="loading" class="mt-3" style="display:none;">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+      <span class="ms-2">Running model, please wait...</span>
+    </div>
+  </form>
+
+  <script>
+    const form = document.getElementById('predictForm');
+    const loading = document.getElementById('loading');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    form.addEventListener('submit', function(e){
+      // attach existing_file if user didn't re-select file
+      const fileEl = document.getElementById('file');
+      const uploaded = '{{ uploaded if uploaded else "" }}';
+      function basename(path){ if(!path) return ''; const p = path.split('/').pop(); return p.split('\\').pop(); }
+      if((!fileEl.files || fileEl.files.length === 0) && uploaded){
+        let existing = document.querySelector('input[name="existing_file"]');
+        const fn = basename(uploaded);
+        if(!existing){
+          existing = document.createElement('input'); existing.type='hidden'; existing.name='existing_file'; existing.value = fn; form.appendChild(existing);
+        } else { existing.value = fn; }
+      }
+      // if the user uploaded a new file, update a persistent hidden input so subsequent runs
+      // (without re-selecting) will still reference the last uploaded filename.
+      if(fileEl.files && fileEl.files.length > 0){
+        const f = fileEl.files[0].name;
+        let persist = document.querySelector('input[name="existing_file"]');
+        if(!persist){ persist = document.createElement('input'); persist.type='hidden'; persist.name='existing_file'; form.appendChild(persist); }
+        persist.value = f;
+      }
+      loading.style.display = 'inline-block';
+      submitBtn.disabled = true;
+    });
+
+    const padRange = document.getElementById('pad');
+    const padVal = document.getElementById('padVal');
+    let padTimer = null;
+    padRange.addEventListener('input', function(e){
+      padVal.value = e.target.value;
+      // if an uploaded image is present, auto-submit after debounce
+      const uploaded = '{{ uploaded if uploaded else "" }}';
+      if(uploaded){
+        if(padTimer) clearTimeout(padTimer);
+        padTimer = setTimeout(function(){
+          const tmp = document.createElement('form');
+          tmp.method = 'POST'; tmp.action = '{{ url_for("predict") }}'; tmp.enctype='multipart/form-data';
+          const inp = document.createElement('input'); inp.type='hidden'; inp.name='existing_file'; inp.value = basename(uploaded); tmp.appendChild(inp);
+          ['task','det_model','seg_model','pad','multi_leaf'].forEach(function(name){
+            const el = document.getElementsByName(name)[0]; if(!el) return; const h = document.createElement('input'); h.type='hidden'; h.name=name; if(el.type==='checkbox') h.value = el.checked ? 'on' : ''; else h.value = el.value; tmp.appendChild(h);
+          });
+          document.body.appendChild(tmp); tmp.submit();
+        }, 700);
+      }
+    });
+
+    // Reset form and hide results
+    resetBtn.addEventListener('click', function(){
+      form.reset();
+      // remove uploaded/result preview by navigating to upload page
+      window.location = '{{ url_for("upload") }}';
+    });
+
+    // toggle model selects based on task
+    const taskSel = document.getElementById('task');
+    const detGroup = document.getElementById('detModelGroup');
+    const segGroup = document.getElementById('segModelGroup');
+    function updateTaskUI(){
+      const t = taskSel.value;
+      if(t === 'detection'){
+        detGroup.style.display = '';
+        segGroup.style.display = 'none';
+      } else {
+        detGroup.style.display = 'none';
+        segGroup.style.display = '';
+      }
+    }
+    taskSel.addEventListener('change', updateTaskUI);
+    // initialize on load
+    updateTaskUI();
+  </script>
+
+  {% if uploaded and result %}
+    <hr>
+    <h3>Result (inline)</h3>
+    <div class="row">
+      <div class="col-md-6">
+        <h5>Uploaded</h5>
+        <img src="/{{ uploaded }}" class="img-fluid" alt="uploaded">
+      </div>
+      <div class="col-md-6">
+        <h5>Output</h5>
+        {% if result.task == 'detection' %}
+          <p>Detection annotated image:</p>
+          <img src="{{ url_for('result', filename=result.annotated) }}" class="img-fluid">
+        {% elif result.task == 'segmentation' %}
+          <p>Segmentation annotated image:</p>
+          <img src="{{ url_for('result', filename=result.annotated) }}" class="img-fluid">
+        {% elif result.task == 'severity' %}
+          <p>Detection annotated (original):</p>
+          {% if result.detection_annotated %}
+            <img src="{{ url_for('result', filename=result.detection_annotated) }}" class="img-fluid mb-2" style="cursor:zoom-in;" onclick="openModal(this.src)">
+          {% endif %}
+          {% if result.get('crop_overlays') %}
+            <p>Crop overlays (leaf + lesion):</p>
+            <div class="d-flex flex-wrap gap-2">
+              {% for c in result.crop_overlays %}
+                <div class="card p-2 text-center" style="width:220px;">
+                  <img src="{{ url_for('result', filename=c.filename) }}" class="img-fluid mb-1" style="max-width:200px; cursor:zoom-in;" onclick="openModal(this.src)">
+                  <div class="small mb-1">Severity: <span class="badge bg-danger">{{ c.severity }}%</span></div>
+                  <div class="small text-muted mb-2">lesion={{ c.lesion_px }}, leaf={{ c.leaf_px }}</div>
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('result', filename=c.filename) }}" download>Download</a>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p>Crop overlay (leaf + lesion):</p>
+            <img src="{{ url_for('result', filename=result.crop_overlay) }}" class="img-fluid">
+            <p class="mt-2"><strong>Severity:</strong> {{ result.severity_pct }}% (lesion_px={{ result.lesion_px }}, leaf_px={{ result.leaf_px }})</p>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Modal for fullscreen preview -->
+  <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen-sm-down modal-lg modal-dialog-centered">
+      <div class="modal-content bg-dark">
+        <div class="modal-body p-0 text-center">
+          <img id="modalImg" src="" class="img-fluid" style="max-height:90vh;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(src){
+      const img = document.getElementById('modalImg');
+      img.src = src;
+      const modal = new bootstrap.Modal(document.getElementById('imgModal'));
+      modal.show();
+    }
+  </script>
+{% endblock %}

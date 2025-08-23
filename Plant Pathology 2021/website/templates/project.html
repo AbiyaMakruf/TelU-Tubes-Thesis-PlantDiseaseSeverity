@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Project explanation</h2>
+  <p>This thesis project implements object detection and segmentation for plant disease severity estimation. The Jupyter notebook <code>Plant Pathology 2021/notebook.ipynb</code> contains the training and evaluation code that uses Roboflow and Ultralytics YOLO models (yolo11n/s/m and segmentation variants).</p>
+  <p>Main features from the notebook:</p>
+  <ul>
+    <li>Download datasets from Roboflow</li>
+    <li>Train detection & segmentation models</li>
+    <li>Run predictions and save annotated outputs</li>
+    <li>Compute severity metrics using segmentation masks</li>
+  </ul>
+
+  <h3 class="mt-4">Training results & graphs 📈</h3>
+  <p>Below are training mAP comparison charts generated during model training (copied here for convenience):</p>
+  <div class="row">
+    {% for g in graphs %}
+      <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+          <img src="{{ url_for('static', filename='graphs/' + g) }}" class="card-img-top" alt="{{ g }}" style="cursor:zoom-in;" onclick="openModal(this.src)">
+          <div class="card-body">
+            <p class="card-text small">{{ g.replace('_', ' ').replace('.png','') }} — model comparison 📊</p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+    <!-- Modal for project images -->
+    <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-fullscreen-sm-down modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark">
+          <div class="modal-body p-0 text-center">
+            <img id="modalImg" src="" class="img-fluid" style="max-height:90vh;">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      function openModal(src){
+        const img = document.getElementById('modalImg'); img.src = src; const modal = new bootstrap.Modal(document.getElementById('imgModal')); modal.show();
+      }
+    </script>
+{% endblock %}

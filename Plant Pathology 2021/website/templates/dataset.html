@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Dataset</h2>
+  <p>The repository includes several datasets used in experiments (YOLO format):</p>
+  <ul>
+    <li><code>dataset/object_detection</code> — main object detection dataset</li>
+    <li><code>dataset/mask_daun</code> — leaf segmentation</li>
+    <li><code>dataset/mask_lesi</code> — lesion segmentation</li>
+    <li><code>dataset/few_shot*</code> — few-shot subsets</li>
+  </ul>
+  <h4 class="mt-4">Sample images (train / valid / test) 📷</h4>
+  <div class="row mb-3">
+    {% for subset in ['train','valid','test'] %}
+      <div class="col-md-4">
+        <h6 class="mt-2">{{ subset|capitalize }}</h6>
+        <div class="d-flex flex-wrap gap-2">
+          {% for f in samples.get(subset, []) %}
+            <div class="text-center">
+              <img src="{{ url_for('static', filename='dataset_samples/' + subset + '/' + f) }}" class="img-thumbnail" style="width:100px;height:100px;object-fit:cover;cursor:zoom-in;" onclick="openModal(this.src)">
+              <div class="small text-muted">{{ classes[subset].get(f, 'unknown') }}</div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="mt-2">
+          <button class="btn btn-sm btn-outline-primary" onclick="showAll('{{ subset }}')">Show all {{ subset }}</button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Container where 'show all' will render full lists -->
+  <div id="fullListContainer" class="row"></div>
+
+  <!-- Modal for dataset/project images -->
+  <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen-sm-down modal-lg modal-dialog-centered">
+      <div class="modal-content bg-dark">
+        <div class="modal-body p-0 text-center">
+          <img id="modalImg" src="" class="img-fluid" style="max-height:90vh;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fullLists = {{ full_lists|tojson }};
+    const classes = {{ classes|tojson }};
+    function openModal(src){
+      const img = document.getElementById('modalImg'); img.src = src;
+      const modal = new bootstrap.Modal(document.getElementById('imgModal'));
+      modal.show();
+    }
+    function showAll(subset){
+      const container = document.getElementById('fullListContainer');
+      container.innerHTML = '';
+      const list = fullLists[subset] || [];
+      if(list.length === 0){ container.innerHTML = '<p class="text-muted">No images</p>'; return; }
+      // build cards with filter input
+      let html = `<div class="col-12 mb-2"><h4>All ${subset} images</h4><div class="mb-2"><input id="filterInput" class="form-control" placeholder="Filter by class (e.g. healthy, frog, rust)"></div><div class="row" id="cardsRow">`;
+      for(let f of list){
+        const cls = classes[subset][f] || 'unknown';
+        const src = '{{ url_for('static', filename='dataset_samples') }}' + '/' + subset + '/' + f;
+        html += `<div class="col-6 col-md-3 mb-3 card-wrap" data-class="${cls}"><div class="card"><img src="${src}" class="card-img-top" style="height:160px;object-fit:cover;cursor:zoom-in;" onclick="openModal('${src}')"><div class="card-body p-2 text-center small">${cls}</div></div></div>`;
+      }
+      html += '</div></div>';
+      container.innerHTML = html;
+      document.getElementById('filterInput').addEventListener('input', function(e){
+        const v = e.target.value.toLowerCase();
+        document.querySelectorAll('.card-wrap').forEach(function(el){
+          const c = el.getAttribute('data-class') || '';
+          el.style.display = (v === '' || c.indexOf(v) !== -1) ? '' : 'none';
+        });
+      });
+      window.scrollTo({top: container.offsetTop-20, behavior:'smooth'});
+    }
+  </script>
+
+  <h4 class="mt-3">About this dataset 📚</h4>
+  <p class="small">This project uses the Plant Pathology 2021 dataset (FGVC8 competition). The dataset contains images of apple leaves labeled with three disease categories (frog-eye leaf spot, rust) and healthy leaves. The competition focused on robust classification/detection under varied imaging conditions; this site includes a small sample for quick inspection (see Kaggle overview for full details).</p>
+{% endblock %}

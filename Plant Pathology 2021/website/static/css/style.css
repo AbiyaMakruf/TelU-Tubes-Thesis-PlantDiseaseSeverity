@@ -1,0 +1,17 @@
+body { background: #f7f7f7; }
+.card-img-top { max-height: 200px; object-fit: cover; }
+body { background: linear-gradient(180deg, #f7fdf7 0%, #f0f7f0 100%); }
+.jumbotron, .hero {
+	background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(245,255,245,0.9));
+}
+.card { border: none; }
+.card.shadow-sm { box-shadow: 0 6px 18px rgba(20,80,20,0.06); }
+.card-img-top { max-height: 220px; object-fit: cover; }
+.img-thumbnail { border-radius: 8px; }
+.navbar-brand { font-weight:700; }
+.small.text-muted { font-style: italic; }
+.img-thumbnail:hover { transform: scale(1.03); transition: transform 160ms ease-in-out; }
+/* small animation helpers */
+.hover-scale { transition: transform 210ms ease; }
+.hover-scale:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 10px 30px rgba(20,80,20,0.12); }
+.carousel .carousel-item img { max-height: 380px; }

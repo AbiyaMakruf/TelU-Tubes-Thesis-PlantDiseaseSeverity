@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Results</h2>
+  {% if files %}
+    <div class="row">
+    {% for f in files %}
+      <div class="col-md-3 mb-3">
+        <div class="card">
+          <img src="{{ url_for('result', filename=f) }}" class="card-img-top" alt="{{ f }}">
+          <div class="card-body">
+            <p class="card-text">{{ f }}</p>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">No result images yet. Run prediction to generate annotated outputs.</p>
+  {% endif %}
+{% endblock %}

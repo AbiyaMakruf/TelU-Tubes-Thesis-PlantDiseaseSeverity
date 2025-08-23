@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="row">
+    <div class="col-md-8">
+      <h2>Dashboard</h2>
+      <p>Quick preview of example prediction images copied from the project results.</p>
+      <h4>Object Detection examples</h4>
+      <!-- Carousel of examples for a nicer gallery -->
+      <div id="examplesCarousel" class="carousel slide mb-3" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          {% set all_examples = examples.nano + examples.small + examples.medium %}
+          {% for f in all_examples %}
+            <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %}">
+              <div class="d-flex justify-content-center">
+                <img src="{{ url_for('static', filename='examples/object_detection/' + ( 'nano/' if f in examples.nano else ( 'small/' if f in examples.small else 'medium/' ) ) + f) }}" class="d-block" style="max-height:360px; object-fit:contain;" alt="example">
+              </div>
+              <div class="carousel-caption d-none d-md-block">
+                <p class="small">{{ 'frog-eye-leaf-spot' if 'frog' in f.lower() else ('healthy' if 'healthy' in f.lower() else ('rust' if 'rust' in f.lower() else 'example')) }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#examplesCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#examplesCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+
+      <!-- Grid preview for quick glance -->
+      <div class="row g-2">
+        {% for f in all_examples %}
+          <div class="col-6 col-md-4">
+            <div class="card h-100 hover-scale">
+                <img src="{{ url_for('static', filename='examples/object_detection/' + ( 'nano/' if f in examples.nano else ( 'small/' if f in examples.small else 'medium/' ) ) + f) }}" class="card-img-top" alt="" style="cursor:zoom-in;" onclick="openModal(this.src)">
+              <div class="card-body p-2">
+                <div class="small text-muted mb-0">{{ 'frog-eye-leaf-spot' if 'frog' in f.lower() else ('healthy' if 'healthy' in f.lower() else ('rust' if 'rust' in f.lower() else 'unknown')) }}</div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h5>Actions</h5>
+          <p><a href="{{ url_for('upload') }}" class="btn btn-primary">Upload & Predict</a></p>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6>Available models</h6>
+          {% if models %}
+            <ul>
+                  {% for full, name in models %}
+                    <li>{{ name }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">No models copied yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Image modal for larger preview -->
+      <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen-sm-down modal-lg modal-dialog-centered">
+          <div class="modal-content bg-dark">
+            <div class="modal-body p-0 text-center">
+              <img id="modalImg" src="" class="img-fluid" style="max-height:90vh;">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script>
+        function openModal(src){
+          const img = document.getElementById('modalImg');
+          img.src = src;
+          const modal = new bootstrap.Modal(document.getElementById('imgModal'));
+          modal.show();
+        }
+      </script>
+
+    </div>
+  </div>
+{% endblock %}

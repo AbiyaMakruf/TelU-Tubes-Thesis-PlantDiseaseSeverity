@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Severity Estimation</h2>
+  <p>This page shows example severity estimation overlays (if any were copied).</p>
+  {% if files %}
+    <div class="row">
+      {% for f in files %}
+        <div class="col-md-4 mb-3">
+          <div class="card">
+            <img src="{{ url_for('static', filename='examples/severity/' + f) }}" class="card-img-top" alt="{{ f }}">
+            <div class="card-body">
+              <p class="card-text">{{ f }}</p>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">No severity example images found. You can copy severity overlay images to <code>website/static/examples/severity/</code>.</p>
+  {% endif %}
+{% endblock %}
