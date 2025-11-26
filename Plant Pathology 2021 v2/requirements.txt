@@ -1,0 +1,5 @@
+roboflow
+ultralytics
+seaborn
+dagshub
+mlflow>=2,<3
