@@ -1,0 +1,2 @@
+Class,Images,Instances,Box-P,Box-R,Box-F1,mAP50,mAP50-95
+healthy,50,144,0.91648,0.88194,0.89888,0.94502,0.8525

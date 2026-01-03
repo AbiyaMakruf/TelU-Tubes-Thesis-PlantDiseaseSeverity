@@ -1,0 +1,13 @@
+dagshub
+matplotlib
+mlflow
+numpy
+opencv-python
+pandas
+PyYAML
+roboflow
+scikit-learn
+scipy
+seaborn
+tqdm
+ultralytics
