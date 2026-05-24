@@ -1,0 +1,3 @@
+figure,current_issue,recommended_action,supporting_output
+Fig. 18,Caption says training set in the manuscript draft.,"If the plotted source is class_metrics_validation.csv from validation/<size>, caption should say held-out test set or validation/test set according to the actual split used by model.val(split=...).",fig18_19_yolov12_size_source_audit.csv
+Fig. 19,"Caption says training set, but the text uses it to justify model selection.","Use validation/test metrics for selection. Training-curve figures should be described only as training dynamics, not final selection evidence.",fig18_19_yolov12_size_source_audit.csv

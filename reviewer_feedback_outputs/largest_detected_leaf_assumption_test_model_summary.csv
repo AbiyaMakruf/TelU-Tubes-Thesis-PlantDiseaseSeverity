@@ -1,0 +1,2 @@
+n_test_images,detection_success_rate,selected_matches_gt_largest_leaf_iou50_rate,selected_matches_gt_most_severe_leaf_iou50_rate
+149,1.0,0.9798657718120806,0.9530201342281879

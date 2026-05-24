@@ -1,0 +1,5 @@
+size,training_csv_exists,validation_csv_exists,training_last_mAP50,training_last_mAP50_95,validation_or_test_mAP50,validation_or_test_mAP50_95
+nano,True,True,0.95406,0.90119,0.9724335472246958,0.9321221144120002
+small,True,True,0.95705,0.90653,0.9709103715535492,0.9434445953307504
+medium,True,True,0.95175,0.88839,0.952992730473648,0.9184574752414872
+large,True,True,0.94496,0.8807,0.9315763163884968,0.8987489442555977

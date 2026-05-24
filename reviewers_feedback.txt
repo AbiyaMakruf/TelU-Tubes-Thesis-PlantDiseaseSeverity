@@ -1,0 +1,12 @@
+Reviewers:
+The paper addresses a relevant and well-motivated problem, integrating few-shot object detection with a two-stage severity estimation pipeline for apple leaf diseases in complex orchard backgrounds. The research question is clear, the experimental design is systematic, and the reported results are meaningful. The writing is generally fluent and the structure is logical. However, several issues require attention before the manuscript can be accepted.
+
+The severity ground truth is computed only from 750 manually annotated images, a relatively small subset compared to the full dataset (11,053 images). The representativeness of this sample is not statistically justified.
+
+The two-stage pipeline selects only the largest detected leaf as the ROI, which the authors acknowledge may not correspond to the most diseased leaf. However, no quantitative analysis of how often this assumption holds in the test set is provided, leaving an important gap.
+
+Fig. 18 and Fig. 19 are described as showing performance on the "training set," which appears to be a labeling inconsistency since model selection should be based on validation or test performance. This should be clarified.
+
+The paper references "YOLO26" in the conclusion as a future direction, but this is mentioned without any citation or explanation, which may confuse readers at the time of publication.
+
+Statistical significance of the MAE improvement (1.49% vs 0.66%) is not assessed. A simple significance test or confidence interval would strengthen the claim.

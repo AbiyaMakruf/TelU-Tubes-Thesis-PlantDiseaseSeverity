@@ -4,3 +4,4 @@ arsip/
 random_experiment/*
 !random_experiment/*.ipynb
 
+new_experiment_for_feedback_reviewer/

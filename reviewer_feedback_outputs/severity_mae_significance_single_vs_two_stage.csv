@@ -1,0 +1,2 @@
+comparison,n_paired_images,single_stage_mae_pct,two_stage_mae_pct,mean_mae_reduction_pct_point,bootstrap_ci95_low,bootstrap_ci95_high,wilcoxon_statistic,wilcoxon_pvalue_one_sided,n_images_improved,n_images_worse,n_images_equal,sign_test_pvalue_one_sided
+single_stage_single_module minus two_stage_single_module_dynamic,149,1.4881879194630874,0.6602684563758389,0.8279194630872482,0.5494614093959732,1.1574630872483218,4402.5,1.228856087027484e-12,80,18,51,8.303348785522802e-11

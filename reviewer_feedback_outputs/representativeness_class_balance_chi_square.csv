@@ -1,0 +1,2 @@
+test,null_hypothesis,chi_square,p_value,interpretation
+chi-square goodness-of-fit,annotated class proportions follow full filtered dataset proportions,104.31035228148933,2.2350888878356596e-23,A small p-value is expected if the annotated subset was intentionally class-balanced rather than prevalence-proportional.
