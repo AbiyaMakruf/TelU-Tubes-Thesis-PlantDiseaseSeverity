@@ -1,0 +1,13 @@
+[project]
+name = "streamlit-gui"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.5.1",
+    "pandas>=3.0.3",
+    "pillow>=12.3.0",
+    "streamlit>=1.58.0",
+    "ultralytics>=8.3.0",
+]

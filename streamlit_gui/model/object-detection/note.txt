@@ -1,0 +1,1 @@
+model obj adalah few-shot k-40 medium best.pt

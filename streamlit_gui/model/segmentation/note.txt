@@ -1,0 +1,1 @@
+model segmentation adalah yolo11 nano imgsz 1024 best.pt
