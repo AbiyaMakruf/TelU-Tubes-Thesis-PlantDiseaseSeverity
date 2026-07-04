@@ -37,6 +37,9 @@ class TwoStageResult:
     crop_image: RGBImage
     leaf_mask: BoolMask
     lesion_mask: BoolMask
+    full_leaf_mask: BoolMask
+    full_lesion_mask: BoolMask
+    full_overlay: RGBImage
     overlay: RGBImage
     severity: float
     detection_found: bool
@@ -53,6 +56,13 @@ def calculate_severity(leaf_mask: BoolMask, lesion_mask: BoolMask) -> float:
 
 def load_image_from_path(path: str | Path) -> RGBImage:
     image = Image.open(path).convert("RGB")
+    return np.asarray(image)
+
+
+def load_image_from_bytes(data: bytes) -> RGBImage:
+    from io import BytesIO
+
+    image = Image.open(BytesIO(data)).convert("RGB")
     return np.asarray(image)
 
 
@@ -88,6 +98,24 @@ def build_demo_case(sample: DatasetSample, model_od: Any, model_seg: Any) -> dic
     }
 
 
+def build_inference_case(image: RGBImage, image_name: str, model_od: Any, model_seg: Any) -> dict:
+    single_leaf, single_lesion, single_status = predict_segmentation_masks(image, model_seg)
+    single = ScenarioResult(
+        leaf_mask=single_leaf,
+        lesion_mask=single_lesion,
+        overlay=overlay_masks(image, single_leaf, single_lesion),
+        severity=calculate_severity(single_leaf, single_lesion),
+        status=single_status,
+    )
+    two_stage = run_two_stage_pipeline(image, model_od, model_seg)
+    return {
+        "image_name": image_name,
+        "original": image,
+        "single": single,
+        "two_stage": two_stage,
+    }
+
+
 def load_gt_masks(label_path: Path, shape: tuple[int, int]) -> tuple[BoolMask, BoolMask]:
     height, width = shape
     leaf_mask = np.zeros((height, width), dtype=bool)
@@ -100,18 +128,19 @@ def load_gt_masks(label_path: Path, shape: tuple[int, int]) -> tuple[BoolMask, B
         if len(parts) < 7:
             continue
         class_id = int(float(parts[0]))
-        coords = [float(value) for value in parts[1:]]
+        values = [float(value) for value in parts[1:]]
+
         points = []
-        for x_norm, y_norm in zip(coords[0::2], coords[1::2]):
+        for x_norm, y_norm in zip(values[0::2], values[1::2]):
             x = int(np.clip(round(x_norm * width), 0, width - 1))
             y = int(np.clip(round(y_norm * height), 0, height - 1))
             points.append((x, y))
+        instance_mask = polygon_to_mask(points, (height, width))
 
-        polygon_mask = polygon_to_mask(points, (height, width))
         if class_id in LEAF_CLASSES:
-            leaf_mask |= polygon_mask
+            leaf_mask |= instance_mask
         elif class_id in LESION_CLASSES:
-            lesion_mask |= polygon_mask
+            lesion_mask |= instance_mask
 
     return leaf_mask, lesion_mask & leaf_mask
 
@@ -164,7 +193,12 @@ def run_two_stage_pipeline(original: RGBImage, model_od: Any, model_seg: Any) ->
     draw_rectangle(bbox_image, x1, y1, x2, y2, (245, 158, 11), thickness=max(2, width // 320))
 
     leaf_mask, lesion_mask, seg_status = predict_segmentation_masks(crop_image, model_seg)
+    full_leaf_mask = np.zeros((height, width), dtype=bool)
+    full_lesion_mask = np.zeros((height, width), dtype=bool)
+    full_leaf_mask[y1:y2, x1:x2] = leaf_mask
+    full_lesion_mask[y1:y2, x1:x2] = lesion_mask
     overlay = overlay_masks(crop_image, leaf_mask, lesion_mask)
+    full_overlay = overlay_masks(original, full_leaf_mask, full_lesion_mask)
     status = seg_status if detection_found else "OD tidak menemukan box; fallback memakai full image"
 
     return TwoStageResult(
@@ -174,6 +208,9 @@ def run_two_stage_pipeline(original: RGBImage, model_od: Any, model_seg: Any) ->
         crop_image=crop_image,
         leaf_mask=leaf_mask,
         lesion_mask=lesion_mask,
+        full_leaf_mask=full_leaf_mask,
+        full_lesion_mask=full_lesion_mask,
+        full_overlay=full_overlay,
         overlay=overlay,
         severity=calculate_severity(leaf_mask, lesion_mask),
         detection_found=detection_found,
@@ -259,6 +296,24 @@ def reference_mask_image(leaf_mask: BoolMask, lesion_mask: BoolMask) -> RGBImage
     canvas[lesion_mask & leaf_mask] = np.array([231, 76, 60], dtype=np.uint8)
     draw_mask_contour(canvas, leaf_mask, (22, 100, 62), thickness=2)
     return canvas
+
+
+def error_map_image(
+    original: RGBImage,
+    gt_lesion_mask: BoolMask,
+    pred_lesion_mask: BoolMask,
+) -> RGBImage:
+    image = (original.astype(np.float32) * 0.42).astype(np.uint8)
+    gt = gt_lesion_mask.astype(bool)
+    pred = pred_lesion_mask.astype(bool)
+    true_positive = gt & pred
+    missed_detection = gt & ~pred
+    wrong_detection = pred & ~gt
+
+    image[true_positive] = np.array([34, 197, 94], dtype=np.uint8)
+    image[missed_detection] = np.array([37, 99, 235], dtype=np.uint8)
+    image[wrong_detection] = np.array([245, 158, 11], dtype=np.uint8)
+    return image
 
 
 def draw_mask_contour(image: RGBImage, mask: BoolMask, color: tuple[int, int, int], thickness: int) -> None:

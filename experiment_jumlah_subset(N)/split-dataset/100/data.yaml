@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../val/images
+test: ../test/images
+
+nc: 3
+names: ['frog-eye-leaf-spot', 'healthy', 'rust']
+
+roboflow:
+  workspace: abiya-thesis
+  project: plant-pathology-2021-object-detection-j1jvh
+  version: 12
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/abiya-thesis/plant-pathology-2021-object-detection-j1jvh/dataset/12

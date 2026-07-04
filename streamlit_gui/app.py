@@ -10,14 +10,16 @@ if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
 from data import DISEASE_CLASSES, discover_samples
-from image_ops import build_demo_case
+from image_ops import build_demo_case, build_inference_case, load_image_from_bytes
 from ui import (
     inject_css,
     render_closeness_panel,
+    render_error_analysis,
     render_header,
     render_metric_strip,
     render_pipeline_tabs,
     render_result_table,
+    render_upload_inference_results,
     render_visual_comparison,
 )
 
@@ -106,16 +108,56 @@ def sidebar_controls():
     return disease_class, sample, current_index + 1, len(samples)
 
 
+def render_model_sidebar() -> None:
+    st.sidebar.divider()
+    st.sidebar.caption("Model aktif")
+    st.sidebar.code(f"OD: {MODEL_OD_PATH.relative_to(APP_DIR)}")
+    st.sidebar.code(f"SEG: {MODEL_SEG_PATH.relative_to(APP_DIR)}")
+
+
+def render_upload_page(model_od, model_seg) -> None:
+    st.subheader("Upload Inference")
+    st.caption("Upload 1 sampai 5 gambar daun untuk membandingkan estimasi severity Single-Stage dan Two-Stage.")
+    uploaded_files = st.file_uploader(
+        "Pilih gambar",
+        type=("jpg", "jpeg", "png", "bmp", "webp"),
+        accept_multiple_files=True,
+    )
+
+    if not uploaded_files:
+        st.info("Belum ada gambar yang diupload.")
+        return
+
+    if len(uploaded_files) > 5:
+        st.warning("Maksimal 5 gambar per proses. Hanya 5 gambar pertama yang digunakan.")
+        uploaded_files = uploaded_files[:5]
+
+    cases = []
+    with st.spinner("Menjalankan inference untuk gambar upload..."):
+        for uploaded_file in uploaded_files:
+            image = load_image_from_bytes(uploaded_file.getvalue())
+            cases.append(build_inference_case(image, uploaded_file.name, model_od=model_od, model_seg=model_seg))
+
+    render_upload_inference_results(cases)
+
+
 def main() -> None:
     inject_css()
     render_header()
-    _, sample, image_number, image_total = sidebar_controls()
+    page = st.sidebar.radio("Halaman", ("Dataset Demo", "Upload Inference"))
 
     try:
         model_od, model_seg = load_models()
     except Exception as exc:
         st.error(f"Gagal memuat model YOLO: {exc}")
         st.stop()
+
+    if page == "Upload Inference":
+        render_model_sidebar()
+        render_upload_page(model_od, model_seg)
+        return
+
+    _, sample, image_number, image_total = sidebar_controls()
 
     with st.spinner("Menjalankan object detection, cropping ROI, dan segmentation..."):
         case = build_demo_case(sample, model_od=model_od, model_seg=model_seg)
@@ -129,6 +171,7 @@ def main() -> None:
     render_metric_strip(case)
     render_visual_comparison(case)
     render_pipeline_tabs(case)
+    render_error_analysis(case)
 
     left, right = st.columns([1.05, 0.95])
     with left:

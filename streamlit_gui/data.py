@@ -52,9 +52,21 @@ def discover_samples() -> dict[str, list[DatasetSample]]:
         disease_class = infer_disease_class(image_path)
         if disease_class is None:
             continue
-        label_path = LABEL_DIR / f"{image_path.stem}.txt"
+        label_path = resolve_label_path(image_path)
         samples[disease_class].append(DatasetSample(disease_class, image_path, label_path))
     return samples
+
+
+def resolve_label_path(image_path: Path) -> Path:
+    exact_label_path = LABEL_DIR / f"{image_path.stem}.txt"
+    if exact_label_path.exists():
+        return exact_label_path
+
+    prefix = image_path.stem.split(".rf.", maxsplit=1)[0]
+    candidates = sorted(LABEL_DIR.glob(f"{prefix}.rf.*.txt"))
+    if candidates:
+        return candidates[0]
+    return exact_label_path
 
 
 def get_sample_names(disease_class: str) -> list[str]:

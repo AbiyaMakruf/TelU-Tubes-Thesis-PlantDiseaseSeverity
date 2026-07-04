@@ -1,5 +1,0 @@
-pipeline,n,mae_pct,median_abs_error_pct,max_abs_error_pct
-single_stage_single_module,149,1.4881879194630874,0.41,23.67
-two_stage_single_module_dynamic,149,0.6602684563758389,0.07000000000000006,19.88
-single_stage_dual_module,149,0.38966442953020136,0.11000000000000032,19.88
-two_stage_dual_module_dynamic,149,0.4822818791946309,0.08000000000000007,19.88

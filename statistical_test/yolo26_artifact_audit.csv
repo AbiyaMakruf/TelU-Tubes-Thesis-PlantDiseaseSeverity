@@ -1,6 +1,0 @@
-path,is_file,size_bytes
-yolo_version_comparison_experiment\results\yolo_v26,False,
-yolo_version_comparison_experiment\runs\detect\results\yolo_v26,False,
-yolo_version_comparison_experiment\yolo26m.pt,True,44255705.0
-yolo_version_comparison_experiment\yolo26n.pt,True,5544453.0
-yolo_version_comparison_experiment\yolo26s.pt,True,20422725.0

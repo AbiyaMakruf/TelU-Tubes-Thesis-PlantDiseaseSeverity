@@ -1,0 +1,7 @@
+path: C:/Users/abiyamf/Documents/Code Program/Thesis/new_experiment_for_feedback_reviewer/dataset/train
+train: images
+val: images
+test: images
+
+nc: 3
+names: ['frog-eye-leaf-spot', 'healthy', 'rust']

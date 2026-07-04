@@ -1,12 +1,18 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import streamlit as st
+from PIL import Image
 
-from image_ops import reference_mask_image
+from image_ops import error_map_image, reference_mask_image
+
+
+MAX_DISPLAY_SIDE = 1400
 
 
 def _image(target, image, caption: str) -> None:
+    image = _prepare_display_image(image)
     try:
         target.image(image, caption=caption, width="stretch")
     except TypeError:
@@ -18,6 +24,18 @@ def _dataframe(table) -> None:
         st.dataframe(table, width="stretch", hide_index=True)
     except TypeError:
         st.dataframe(table, use_container_width=True, hide_index=True)
+
+
+def _prepare_display_image(image):
+    if not isinstance(image, np.ndarray) or image.ndim < 2:
+        return image
+    height, width = image.shape[:2]
+    longest_side = max(height, width)
+    if longest_side <= MAX_DISPLAY_SIDE:
+        return image
+    scale = MAX_DISPLAY_SIDE / longest_side
+    new_size = (max(1, int(width * scale)), max(1, int(height * scale)))
+    return np.asarray(Image.fromarray(image).resize(new_size, Image.Resampling.LANCZOS))
 
 
 def inject_css() -> None:
@@ -153,7 +171,7 @@ def render_visual_comparison(case: dict) -> None:
         st.metric("Severity Single-Stage", f"{case['single'].severity:.2f}%")
         st.caption(case["single"].status)
     with col_two:
-        _image(st, case["two_stage"].overlay, "Two-Stage: detection-guided segmentation ROI")
+        _image(st, case["two_stage"].full_overlay, "Two-Stage: detection-guided segmentation ROI")
         st.metric("Severity Two-Stage", f"{case['two_stage'].severity:.2f}%")
         st.caption(case["two_stage"].status)
 
@@ -187,6 +205,67 @@ def render_pipeline_tabs(case: dict) -> None:
         _image(cols[3], case["two_stage"].overlay, "Masking daun dan lesi ROI")
         cols[4].metric("Nilai akhir keparahan", f"{case['two_stage'].severity:.2f}%")
         st.caption("Model: YOLOv12-Medium K=40 untuk deteksi ROI terbesar, lalu YOLOv11-Nano 1024px untuk segmentasi daun dan lesi.")
+
+
+def render_error_analysis(case: dict) -> None:
+    st.subheader("Analisis Miss Detection dan Wrong Detection")
+    st.caption("Hijau: lesi benar terdeteksi | Biru: miss detection | Kuning: wrong detection")
+    cols = st.columns(3)
+    with cols[0]:
+        _image(
+            st,
+            reference_mask_image(case["gt"].leaf_mask, case["gt"].lesion_mask),
+            "Ground Truth: masker referensi daun dan lesi",
+        )
+    with cols[1]:
+        _image(
+            st,
+            error_map_image(case["original"], case["gt"].lesion_mask, case["single"].lesion_mask),
+            "Single-Stage: miss/wrong detection lesi",
+        )
+    with cols[2]:
+        _image(
+            st,
+            error_map_image(case["original"], case["gt"].lesion_mask, case["two_stage"].full_lesion_mask),
+            "Two-Stage: miss/wrong detection lesi",
+        )
+
+
+def render_upload_inference_results(cases: list[dict]) -> None:
+    st.subheader("Ringkasan Severity Gambar Upload")
+    rows = []
+    for index, case in enumerate(cases, start=1):
+        rows.append(
+            {
+                "Gambar": index,
+                "Nama File": case["image_name"],
+                "Single-Stage Severity (%)": case["single"].severity,
+                "Two-Stage Severity (%)": case["two_stage"].severity,
+                "Selisih Single vs Two (%)": abs(case["single"].severity - case["two_stage"].severity),
+            }
+        )
+    table = pd.DataFrame(rows)
+    _dataframe(
+        table.style.format(
+            {
+                "Single-Stage Severity (%)": "{:.2f}",
+                "Two-Stage Severity (%)": "{:.2f}",
+                "Selisih Single vs Two (%)": "{:.2f}",
+            }
+        )
+    )
+
+    for index, case in enumerate(cases, start=1):
+        with st.expander(f"Gambar {index}: {case['image_name']}", expanded=index == 1):
+            st.markdown(
+                f"**Single-Stage:** {case['single'].severity:.2f}% | "
+                f"**Two-Stage:** {case['two_stage'].severity:.2f}%"
+            )
+            cols = st.columns(4)
+            _image(cols[0], case["original"], "Citra upload")
+            _image(cols[1], case["single"].overlay, "Single-Stage segmentation")
+            _image(cols[2], case["two_stage"].bbox_image, "Two-Stage detection dan crop area")
+            _image(cols[3], case["two_stage"].full_overlay, "Two-Stage segmentation")
 
 
 def render_result_table(case: dict) -> None:

@@ -26,6 +26,7 @@ uv run --with streamlit --with numpy --with pandas --with pillow --with ultralyt
 - Pemilihan 3 kelas penyakit: `Healthy`, `Rust`, dan `Frog-eye Leaf Spot`.
 - Pilihan sampel dari `streamlit_gui/dataset/images`.
 - Ground Truth otomatis dibangun dari polygon YOLO di `streamlit_gui/dataset/labels`.
+  - Jika hash Roboflow setelah `.rf.` berbeda antara image dan label, app mencocokkan label berdasarkan prefix nama file sebelum `.rf.`.
 - Komparasi visual berdampingan untuk:
   - Ground Truth
   - Single-Stage Pipeline: model segmentation langsung pada citra penuh.
@@ -43,6 +44,13 @@ uv run --with streamlit --with numpy --with pandas --with pillow --with ultralyt
 - Panel kedekatan estimasi ke GT:
   - Menampilkan absolute error Single-Stage dan Two-Stage untuk sampel aktif.
   - Memberikan centang hijau pada pipeline yang paling dekat dengan GT.
+- Analisis miss/wrong detection:
+  - Hijau: lesi benar terdeteksi.
+  - Biru: miss detection.
+  - Kuning: wrong detection.
+- Halaman `Upload Inference`:
+  - Mendukung upload 1 sampai 5 gambar.
+  - Menampilkan tabel perbandingan severity Single-Stage dan Two-Stage untuk setiap gambar.
 
 ## Model dan Label
 
