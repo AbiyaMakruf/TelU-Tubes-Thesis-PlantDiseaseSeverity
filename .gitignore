@@ -3,5 +3,6 @@ arsip/
 *.pt
 random_experiment/*
 !random_experiment/*.ipynb
-
-new_experiment_for_feedback_reviewer/
+new_experiment_for_feedback_reviewer/dataset
+new_experiment_for_feedback_reviewer/evaluation_dataset
+new_experiment_for_feedback_reviewer/split-dataset
